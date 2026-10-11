@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>海洋 · 後台管理</title>
+<style>
+  :root{--deep:#052540;--deep2:#0a3b63;--blue:#1673b8;--sky:#3fa7dd;--light:#7fd0ef;--white:#fff;--gold:#ffcf5c;--good:#1fb27a;--bad:#e46a6a;--line:rgba(255,255,255,.14);--ink:#eaf6fd;--muted:#9db9cc;}
+  *{box-sizing:border-box;} body{margin:0;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:radial-gradient(120% 80% at 50% -10%,#0d456f,var(--deep2) 42%,var(--deep));min-height:100vh;}
+  .wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px;}
+  h1{font-size:20px;letter-spacing:.2em;margin:0 0 2px;color:#fff;} .sub{color:var(--light);font-size:12px;margin-bottom:16px;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;}
+  h2{font-size:14px;color:var(--light);margin:0 0 12px;letter-spacing:.08em;}
+  label{display:block;font-size:11px;color:var(--light);margin:8px 2px 4px;}
+  input,select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:rgba(3,20,36,.55);color:#fff;font-size:14px;outline:none;}
+  input:focus,select:focus{border-color:var(--sky);}
+  .btn{padding:9px 16px;border:none;border-radius:9px;font-size:14px;font-weight:700;background:linear-gradient(180deg,var(--sky),var(--blue));color:#fff;cursor:pointer;}
+  .btn:active{transform:translateY(1px);} .btn.sm{padding:5px 10px;font-size:12px;} .btn.g{background:linear-gradient(180deg,#26c98a,#149c68);} .btn.ghost{background:transparent;border:1px solid var(--line);} .btn.red{background:linear-gradient(180deg,#e46a6a,#c23e3e);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:end;} .row > div{flex:1;min-width:90px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .stat{background:rgba(3,20,36,.4);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;} .stat .v{font-size:22px;font-weight:800;color:var(--gold);} .stat .k{font-size:11px;color:var(--muted);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;} th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle;} th{color:var(--light);font-weight:600;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;} .tag.up{background:rgba(63,167,221,.2);color:var(--light);} .tag.fin{background:rgba(31,178,122,.2);color:var(--good);} .tag.live{background:rgba(228,106,106,.2);color:var(--bad);}
+  .err{color:#ff9a9a;font-size:12px;min-height:15px;} .hidden{display:none;} .muted{color:var(--muted);font-size:12px;}
+  .login{max-width:360px;margin:10vh auto;} .scroll{overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌊 海洋 · 後台</h1><div class="sub">純遊戲管理 · 賽事／賽果／玩家（唔涉及任何金錢）</div>
+
+  <div id="login" class="card login">
+    <h2>管理員登入</h2>
+    <label>帳號</label><input id="au" value="admin">
+    <label>密碼</label><input id="ap" type="password" placeholder="admin123">
+    <div style="margin-top:14px"><button class="btn" onclick="login()">登入</button></div>
+    <div class="err" id="le"></div>
+  </div>
+
+  <div id="panel" class="hidden">
+    <div class="card"><h2>📊 儀表板</h2><div class="stats" id="stats"></div></div>
+
+    <div class="card"><h2>➕ 加賽事 / 匯入真實賽程</h2>
+      <div class="row">
+        <div><label>聯賽</label><input id="mLeague" placeholder="英超"></div>
+        <div><label>時間</label><input id="mTime" placeholder="今晚 22:00"></div>
+      </div>
+      <div class="row">
+        <div><label>主隊</label><input id="mHome" placeholder="利物浦"></div>
+        <div style="max-width:70px;flex:0 0 70px"><label>旗</label><input id="mHomeF" placeholder="🔴"></div>
+        <div><label>客隊</label><input id="mAway" placeholder="阿仙奴"></div>
+        <div style="max-width:70px;flex:0 0 70px"><label>旗</label><input id="mAwayF" placeholder="🔵"></div>
+      </div>
+      <div class="row">
+        <div><label>主勝賠率</label><input id="oH" type="number" step="0.01" value="2.00"></div>
+        <div><label>和賠率</label><input id="oD" type="number" step="0.01" value="3.20"></div>
+        <div><label>客勝賠率</label><input id="oA" type="number" step="0.01" value="3.40"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <button class="btn" onclick="addMatch()">加賽事</button>
+        <div style="flex:1;min-width:120px"><label>免費真實賽程</label>
+          <select id="feed"></select></div>
+        <button class="btn ghost" onclick="importFeed()">🌐 匯入</button>
+      </div>
+      <div class="err" id="me2"></div>
+      <div class="muted" style="margin-top:6px">賠率淨係用嚟計積分難度（估啱冷門加多啲分）＋顯示，唔涉及押注／派彩。日後可換 betsapi 真賠率。</div>
+    </div>
+
+    <div class="card"><h2>⚽ 賽事管理</h2><div class="scroll"><table id="mtbl"></table></div></div>
+
+    <div class="card"><h2>📣 公告</h2>
+      <input id="ann" placeholder="打段公告俾玩家睇">
+      <div style="margin-top:10px"><button class="btn sm" onclick="saveAnn()">更新公告</button></div>
+    </div>
+
+    <div class="card"><h2>👥 玩家</h2><div class="scroll"><table id="utbl"></table></div></div>
+    <div style="margin-top:8px"><button class="btn ghost sm" onclick="logout()">登出</button></div>
+  </div>
+</div>
+
+<script>
+let TOKEN = sessionStorage.getItem('ocean_admin') || null;
+async function api(p, o = {}) {
+  o.headers = Object.assign({ 'Content-Type': 'application/json' }, o.headers || {}, TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {});
+  const r = await fetch(p, o); const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('錯誤 ' + r.status)); return j;
+}
+async function login() {
+  try {
+    const j = await api('/api/login', { method: 'POST', body: JSON.stringify({ username: au.value.trim(), password: ap.value }) });
+    if (!j.user.isAdmin) { le.textContent = '呢個帳號唔係管理員'; return; }
+    TOKEN = j.token; sessionStorage.setItem('ocean_admin', TOKEN); show();
+  } catch (e) { le.textContent = e.message; }
+}
+function logout() { TOKEN = null; sessionStorage.removeItem('ocean_admin'); location.reload(); }
+function show() { document.getElementById('login').classList.add('hidden'); document.getElementById('panel').classList.remove('hidden'); loadFeeds(); loadAll(); }
+
+async function loadAll() { await Promise.all([loadStats(), loadMatches(), loadUsers(), loadAnn()]); }
+async function loadStats() {
+  const { stats: s } = await api('/api/admin/stats');
+  document.getElementById('stats').innerHTML = [
+    ['玩家', s.players], ['總積分', s.totalPoints], ['賽事', s.matches], ['已完場', s.finished],
+    ['待開賽', s.upcoming], ['總估注', s.picks], ['估中次數', s.correctPicks], ['命中%', s.picks ? Math.round(s.correctPicks / s.picks * 100) + '%' : '—']
+  ].map(([k, v]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+}
+async function loadFeeds() {
+  try { const { feeds } = await api('/api/admin/feeds'); feed.innerHTML = feeds.map(f => `<option value="${f.id}">${f.name}</option>`).join(''); } catch (e) {}
+}
+async function loadAnn() { try { const { announcement } = await api('/api/matches'); ann.value = announcement || ''; } catch (e) {} }
+async function loadMatches() {
+  const { matches } = await api('/api/matches');
+  const rows = matches.map(m => {
+    const tag = m.status === 'finished' ? '<span class="tag fin">完場</span>' : m.status === 'live' ? '<span class="tag live">進行中</span>' : '<span class="tag up">待開賽</span>';
+    const resTxt = m.result ? (m.result === 'home' ? m.home.n : m.result === 'draw' ? '和' : m.away.n) : '';
+    const ctrl = m.status === 'finished' ? `賽果：<b style="color:var(--good)">${resTxt}</b>` :
+      `<button class="btn sm g" onclick="setResult(${m.id},'home')">主勝</button>
+       <button class="btn sm g" onclick="setResult(${m.id},'draw')">和</button>
+       <button class="btn sm g" onclick="setResult(${m.id},'away')">客勝</button>`;
+    return `<tr><td>${tag}</td><td><b>${m.home.n}</b> ${m.home.f} vs ${m.away.f} <b>${m.away.n}</b><div class="muted">${m.league} · ${m.time}</div></td>
+      <td class="muted">${(+m.o.home).toFixed(2)} / ${(+m.o.draw).toFixed(2)} / ${(+m.o.away).toFixed(2)}</td>
+      <td>${ctrl}</td><td><button class="btn sm red" onclick="delMatch(${m.id})">刪</button></td></tr>`;
+  }).join('');
+  mtbl.innerHTML = `<tr><th>狀態</th><th>賽事</th><th>賠率(主/和/客)</th><th>入賽果 → 自動加分</th><th></th></tr>${rows || '<tr><td colspan=5 class=muted>未有賽事</td></tr>'}`;
+}
+async function loadUsers() {
+  const { users } = await api('/api/admin/users');
+  const rows = users.filter(u => !u.isAdmin).sort((a, b) => b.points - a.points).map(u =>
+    `<tr><td><b>${u.username}</b></td><td>${u.points} 分</td><td class="muted">${u.played ? Math.round(u.correct / u.played * 100) + '% (' + u.correct + '/' + u.played + ')' : '—'}</td></tr>`).join('');
+  utbl.innerHTML = `<tr><th>玩家</th><th>積分</th><th>估中率</th></tr>${rows || '<tr><td colspan=3 class=muted>未有玩家</td></tr>'}`;
+}
+async function addMatch() {
+  try {
+    await api('/api/admin/match', { method: 'POST', body: JSON.stringify({
+      league: mLeague.value || '賽事', time: mTime.value || '稍後開賽',
+      home: { n: mHome.value || '主隊', f: mHomeF.value || '⚽' }, away: { n: mAway.value || '客隊', f: mAwayF.value || '⚽' },
+      o: { home: +oH.value || 2, draw: +oD.value || 3.2, away: +oA.value || 3.4 } }) });
+    mHome.value = mAway.value = mHomeF.value = mAwayF.value = ''; me2.textContent = '';
+    await loadMatches(); await loadStats();
+  } catch (e) { me2.textContent = e.message; }
+}
+async function importFeed() { try { const j = await api('/api/admin/import', { method: 'POST', body: JSON.stringify({ leagueId: feed.value }) }); me2.textContent = '匯入咗 ' + j.added + ' 場'; await loadMatches(); await loadStats(); } catch (e) { me2.textContent = e.message; } }
+async function setResult(matchId, result) { if (!confirm('確定開賽果？開咗會即刻幫估中嘅玩家加分。')) return; await api('/api/admin/result', { method: 'POST', body: JSON.stringify({ matchId, result }) }); await loadAll(); }
+async function delMatch(id) { if (!confirm('刪除呢場？')) return; await api('/api/admin/match/' + id, { method: 'DELETE' }); await loadMatches(); await loadStats(); }
+async function saveAnn() { await api('/api/admin/announcement', { method: 'POST', body: JSON.stringify({ text: ann.value }) }); alert('公告更新咗'); }
+if (TOKEN) show();
+</script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>海洋 · 估波遊戲</title>
+<style>
+  :root{--deep:#052540;--deep2:#0a3b63;--blue:#1673b8;--sky:#3fa7dd;--light:#7fd0ef;--foam:#d6f1fb;--gold:#ffcf5c;--gold-d:#e8a72c;--good:#1fb27a;--line:rgba(255,255,255,.14);--ink:#eaf6fd;--muted:#9db9cc;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{font-family:-apple-system,"PingFang TC","Heiti TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:radial-gradient(120% 80% at 50% -10%,#0d456f 0%,var(--deep2) 42%,var(--deep) 100%);min-height:100dvh;overflow-x:hidden;}
+  .waves{position:fixed;top:0;left:0;right:0;height:180px;z-index:0;opacity:.5;pointer-events:none;}
+  .app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:0 14px 92px;min-height:100dvh;}
+  header.brand{display:flex;align-items:center;gap:11px;padding:18px 4px 8px;}
+  .logo{width:42px;height:42px;flex:0 0 42px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35));}
+  .brand h1{margin:0;font-size:21px;letter-spacing:.28em;font-weight:800;background:linear-gradient(180deg,#fff,#bfe6f7);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .brand .tag{font-size:10.5px;color:var(--light);letter-spacing:.1em;margin-top:2px;}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid var(--line);border-radius:16px;padding:14px;margin:11px 0;backdrop-filter:blur(6px);box-shadow:0 8px 24px rgba(0,10,25,.28);}
+  .auth-wrap{padding-top:6vh;}.auth-hero{text-align:center;margin-bottom:8px;}
+  .auth-hero .big{font-size:26px;font-weight:800;letter-spacing:.3em;background:linear-gradient(180deg,#fff,#a9def6);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .auth-hero p{color:var(--muted);font-size:13px;margin:6px 0 0;}
+  label{display:block;font-size:12px;color:var(--light);margin:12px 2px 6px;}
+  input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(3,20,36,.55);color:#fff;font-size:16px;outline:none;}
+  input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(63,167,221,.22);}
+  .btn{width:100%;padding:14px;border:none;border-radius:13px;font-size:16px;font-weight:700;background:linear-gradient(180deg,var(--sky),var(--blue));color:#fff;margin-top:16px;box-shadow:0 6px 16px rgba(22,115,184,.4);cursor:pointer;}
+  .btn:active{transform:translateY(1px);}.btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:var(--ink);}
+  .switch{text-align:center;margin-top:14px;font-size:13px;color:var(--muted);}.switch a{color:var(--light);font-weight:700;text-decoration:none;}
+  .err{color:#ff9a9a;font-size:12.5px;text-align:center;margin-top:10px;min-height:16px;}
+  .note{font-size:11px;color:var(--muted);text-align:center;margin:14px 4px 0;line-height:1.5;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin:8px 0 2px;}
+  .topbar .hi{font-size:13.5px;}.topbar .hi b{color:#fff;}
+  .pts{display:flex;align-items:center;gap:6px;background:rgba(255,207,92,.14);border:1px solid rgba(255,207,92,.4);padding:6px 12px;border-radius:999px;font-weight:800;color:var(--gold);}
+  .pts small{color:var(--muted);font-weight:600;}
+  .sports{display:flex;gap:8px;margin:10px 0 4px;}
+  .sport{flex:1;text-align:center;padding:8px 0;border:1px solid var(--line);border-radius:11px;background:rgba(3,20,36,.35);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;}
+  .sport.on{background:rgba(63,167,221,.2);border-color:var(--sky);color:#fff;}.sport .e{font-size:16px;display:block;}
+  .cats{display:flex;gap:7px;overflow-x:auto;padding:8px 0 4px;scrollbar-width:none;}.cats::-webkit-scrollbar{display:none;}
+  .cat{flex:0 0 auto;padding:7px 15px;border-radius:999px;border:1px solid var(--line);background:rgba(3,20,36,.35);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .cat.on{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#3a2600;border-color:transparent;}
+  .cat.wc.on{background:linear-gradient(180deg,var(--sky),var(--blue));color:#fff;}
+  .m-lg{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:9px;}.m-lg .live{color:#ff8a8a;font-weight:700;}
+  .teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:10px;}
+  .team{display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .team .fl{width:36px;height:36px;border-radius:50%;background:rgba(63,167,221,.18);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--light);}
+  .team .nm{font-size:13px;font-weight:700;text-align:center;line-height:1.15;}
+  .vs{font-size:12px;color:var(--muted);font-weight:800;text-align:center;}
+  .mk-tabs{display:flex;gap:6px;margin:4px 0 10px;flex-wrap:wrap;}
+  .mk-tab{padding:5px 11px;border-radius:9px;border:1px solid var(--line);background:rgba(3,20,36,.35);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;}
+  .mk-tab.on{background:rgba(63,167,221,.22);border-color:var(--sky);color:#fff;}.mk-tab .pt{color:var(--gold);font-size:10px;}
+  .opts{display:grid;gap:7px;}.opts.c3{grid-template-columns:1fr 1fr 1fr;}.opts.c2{grid-template-columns:1fr 1fr;}
+  .opt{border:1px solid var(--line);background:rgba(3,20,36,.4);border-radius:11px;padding:9px 6px;text-align:center;cursor:pointer;transition:.12s;}
+  .opt .l{font-size:12.5px;font-weight:700;color:#fff;}.opt .s{font-size:10px;color:var(--gold);margin-top:2px;}
+  .opt.sel{border-color:var(--sky);background:rgba(63,167,221,.2);box-shadow:0 0 0 2px rgba(63,167,221,.32) inset;}
+  .opt.locked{opacity:.5;cursor:default;}.opt.win{border-color:var(--good);background:rgba(31,178,122,.22);}
+  .cs{display:flex;align-items:center;justify-content:center;gap:10px;padding:4px 0;}
+  .cs input{width:56px;text-align:center;font-size:20px;padding:8px 0;}.cs .x{color:var(--muted);font-weight:800;}.cs-btn{margin-top:8px;}
+  .mstat{font-size:11px;margin-top:9px;color:var(--muted);text-align:center;}.mstat.done{color:var(--good);}.mstat.mine b{color:var(--light);}
+  .out-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .out{border:1px solid var(--line);background:rgba(3,20,36,.4);border-radius:11px;padding:11px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;}
+  .out.sel{border-color:var(--gold);background:rgba(255,207,92,.16);color:var(--gold);}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .stat{background:rgba(3,20,36,.4);border:1px solid var(--line);border-radius:13px;padding:13px;text-align:center;}
+  .stat .v{font-size:21px;font-weight:800;color:var(--gold);}.stat .k{font-size:11px;color:var(--muted);margin-top:3px;}
+  .brk{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12.5px;}.brk:last-child{border:none;}.brk b{color:var(--light);}
+  .hist-row{display:flex;align-items:center;gap:9px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12px;}.hist-row:last-child{border:none;}
+  .hist-t{flex:1;line-height:1.3;}.hist-t small{color:var(--muted);display:block;}.hist-p{font-weight:800;color:var(--good);}.hist-p.miss{color:var(--muted);font-weight:600;}
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;justify-content:center;background:linear-gradient(180deg,rgba(5,25,45,.2),rgba(4,20,36,.96));border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom);}
+  nav.tabs .in{display:flex;width:100%;max-width:520px;}
+  .tab{flex:1;text-align:center;padding:10px 0 11px;color:var(--muted);font-size:11px;cursor:pointer;}.tab .ic{font-size:19px;display:block;margin-bottom:2px;}.tab.on{color:var(--light);}
+  .hidden{display:none !important;}
+  .sect-t{font-size:13px;color:var(--light);letter-spacing:.08em;margin:14px 4px 2px;font-weight:700;}
+  .loading{text-align:center;color:var(--muted);font-size:13px;padding:26px 0;line-height:1.6;}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:9;background:rgba(6,42,74,.97);border:1px solid var(--sky);color:var(--ink);font-size:12.5px;padding:11px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,10,25,.5);max-width:90%;text-align:center;line-height:1.5;}
+  .foam-line{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:6px 0;}
+</style>
+</head>
+<body>
+<svg class="waves" viewBox="0 0 480 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,60 C120,110 240,10 480,70 L480,0 L0,0 Z" fill="#1673b8" opacity=".5"/>
+  <path d="M0,90 C160,40 300,130 480,80 L480,0 L0,0 Z" fill="#3fa7dd" opacity=".4"/>
+  <path d="M0,120 C140,160 320,60 480,120 L480,0 L0,0 Z" fill="#7fd0ef" opacity=".25"/>
+</svg>
+<div class="app">
+  <header class="brand">
+    <svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe9fb"/><stop offset="1" stop-color="#1673b8"/></linearGradient></defs>
+      <circle cx="24" cy="24" r="22" fill="#062a4a" stroke="url(#g)" stroke-width="2"/>
+      <path d="M6 30 C13 22 18 34 24 27 C30 20 35 32 42 25" fill="none" stroke="#7fd0ef" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M8 36 C15 29 19 39 24 33 C29 27 34 37 40 31" fill="none" stroke="#3fa7dd" stroke-width="2.2" stroke-linecap="round" opacity=".8"/>
+    </svg>
+    <div><h1>海洋</h1><div class="tag">估波 · 多玩法 · 儲分鬥戰績</div></div>
+  </header>
+  <section id="auth" class="auth-wrap">
+    <div class="auth-hero"><div class="big">海洋</div><p id="authSub">登入你嘅帳戶，開始估波儲分</p></div>
+    <div class="card">
+      <label>帳號</label><input id="u" autocomplete="username" placeholder="改個名俾自己">
+      <label>密碼</label><input id="p" type="password" autocomplete="current-password" placeholder="********">
+      <button class="btn" id="authBtn" onclick="doAuth()">登入</button>
+      <div class="err" id="authErr"></div>
+      <div class="switch" id="authSwitch">未有帳戶？<a onclick="toggleMode()">註冊一個</a></div>
+    </div>
+    <div class="note">積分純遊戲玩，唔可以買、唔可以換錢。<br>估中先加分，估錯唔會扣，安心玩。</div>
+  </section>
+  <main id="main" class="hidden">
+    <div class="topbar"><div class="hi">你好，<b id="uname">—</b> 👋</div><div class="pts">🪙 <span id="upts">0</span> <small>分</small></div></div>
+    <section id="view-games">
+      <div class="sports">
+        <div class="sport on" data-sp="soccer" onclick="setSport('soccer')"><span class="e">⚽</span>足球</div>
+        <div class="sport" data-sp="basket" onclick="setSport('basket')"><span class="e">🏀</span>籃球</div>
+      </div>
+      <div class="cats" id="cats"></div>
+      <div id="gameList"><div class="loading">🌊 攞緊賽事…</div></div>
+      <div class="note">每場有多種估法：勝負／大細／讓分／波膽。估中加分、連中有獎，估錯唔扣。<br>完場後開返 app 自動對賽果派分。</div>
+    </section>
+    <section id="view-stats" class="hidden">
+      <div class="sect-t">我嘅戰績</div>
+      <div class="card"><div class="stat-grid">
+        <div class="stat"><div class="v" id="stPts">0</div><div class="k">總積分</div></div>
+        <div class="stat"><div class="v" id="stRate">—</div><div class="k">命中率</div></div>
+        <div class="stat"><div class="v" id="stStreak">0</div><div class="k">而家連勝</div></div>
+        <div class="stat"><div class="v" id="stBest">0</div><div class="k">最長連勝</div></div>
+      </div></div>
+      <div class="sect-t">各玩法命中</div><div class="card" id="brkBox"></div>
+      <div class="sect-t">近期紀錄</div><div class="card" id="histBox"><div class="loading">未有紀錄，去「賽事」估返場先！</div></div>
+      <div class="note">同朋友鬥命中率、連勝、波膽準唔準 — 截圖曬冷 😄</div>
+    </section>
+    <section id="view-me" class="hidden">
+      <div class="sect-t">我嘅帳戶</div>
+      <div class="card">
+        <div class="topbar" style="margin:0"><div class="hi">帳號</div><b id="meName">—</b></div>
+        <div class="foam-line"></div>
+        <div class="topbar" style="margin:0"><div class="hi">總積分</div><span style="font-weight:800;color:var(--gold)" id="mePts">0</span></div>
+        <div class="foam-line"></div>
+        <div class="topbar" style="margin:0"><div class="hi">已玩場數</div><b id="mePlayed">0</b></div>
+      </div>
+      <button class="btn ghost" onclick="logout()">登出</button>
+      <div class="note">帳戶同積分存喺你呢部機嘅瀏覽器（換機／清紀錄會歸零）。<br>賽事同賽果嚟自公開體育數據庫，自動更新。純積分遊戲，無涉金錢。</div>
+    </section>
+  </main>
+</div>
+<nav class="tabs hidden" id="nav"><div class="in">
+  <div class="tab on" data-v="games" onclick="go('games')"><span class="ic">⚽</span>賽事</div>
+  <div class="tab" data-v="stats" onclick="go('stats')"><span class="ic">🏅</span>戰績</div>
+  <div class="tab" data-v="me" onclick="go('me')"><span class="ic">🌊</span>我</div>
+</div></nav>
+<script>
+const API='https://www.thesportsdb.com/api/v1/json/123';
+const SPORTS={soccer:{label:'足球',leagues:[{id:4429,cn:'世界盃 🏆',wc:true},{id:4346,cn:'美職聯'},{id:4351,cn:'巴西甲'},{id:4350,cn:'墨西哥甲'},{id:4689,cn:'K聯賽'},{id:4414,cn:'日職'},{id:4406,cn:'阿根廷甲'},{id:4358,cn:'挪超'},{id:4347,cn:'瑞典超'}]},basket:{label:'籃球',leagues:[{id:4387,cn:'NBA'},{id:4547,cn:'WNBA'},{id:4869,cn:'澳洲NBL'}]}};
+const MK={'1x2':{name:'勝負',pt:30},'ou':{name:'大細 2.5',pt:40},'hdp':{name:'讓分 -1',pt:50},'cs':{name:'波膽',pt:150}};
+const STREAK_BONUS=10,CACHE_MIN=30;
+const DB={users(){return JSON.parse(localStorage.getItem('ocean_users')||'{}');},saveUsers(u){localStorage.setItem('ocean_users',JSON.stringify(u));},session(){return localStorage.getItem('ocean_session');},setSession(n){n?localStorage.setItem('ocean_session',n):localStorage.removeItem('ocean_session');},cache(sp){try{return JSON.parse(localStorage.getItem('ocean_fx_'+sp)||'null');}catch(e){return null;}},saveCache(sp,o){localStorage.setItem('ocean_fx_'+sp,JSON.stringify(o));}};
+function me(){const u=DB.session();return u?DB.users()[u]:null;}
+function saveMe(o){const u=DB.session();const us=DB.users();us[u]=o;DB.saveUsers(us);}
+let mode='login';
+function toggleMode(){mode=mode==='login'?'register':'login';renderAuth();}
+function renderAuth(){document.getElementById('authBtn').textContent=mode==='login'?'登入':'註冊';document.getElementById('authSub').textContent=mode==='login'?'登入你嘅帳戶，開始估波儲分':'改個名同密碼，即刻開始玩';document.getElementById('authSwitch').innerHTML=mode==='login'?'未有帳戶？<a onclick="toggleMode()">註冊一個</a>':'已經有帳戶？<a onclick="toggleMode()">去登入</a>';document.getElementById('authErr').textContent='';}
+function doAuth(){const u=document.getElementById('u').value.trim(),p=document.getElementById('p').value,err=document.getElementById('authErr');if(!u||!p){err.textContent='請填帳號同密碼';return;}const us=DB.users();if(mode==='register'){if(us[u]){err.textContent='呢個帳號已經有人用';return;}us[u]=newUser(p);DB.saveUsers(us);}else{if(!us[u]||us[u].pw!==p){err.textContent='帳號或密碼唔啱';return;}}DB.setSession(u);enter();}
+function newUser(pw){return{pw,pts:0,picks:{},outrights:{},played:0,correct:0,streak:0,best:0,hist:[],mk:{}};}
+function logout(){DB.setSession(null);location.reload();}
+let SPORT='soccer',CAT='all',FIX={soccer:[],basket:[]};
+const LGCN={'Major League Soccer':'美職聯','American USL Championship':'美職USL','American USL League One':'美職USL1','Brazilian Serie A':'巴西甲','Brazilian Serie B':'巴西乙','Argentinian Primera B Nacional':'阿根廷乙','Argentina Primera B Metropolitana':'阿根廷丙','Argentine Primera Division':'阿根廷甲','Swedish Allsvenskan':'瑞典超','Norwegian Eliteserien':'挪超','Chinese Super League':'中超','Mexican Primera League':'墨西哥甲','Liga MX':'墨西哥甲','Japanese J League':'日職','Japanese J1 League':'日職','South Korean K League 1':'K聯賽','Finnish Veikkausliiga':'芬蘭超','Estonian Meistriliiga':'愛沙尼亞超','Icelandic Úrvalsdeild':'冰島超','WNBA':'WNBA','New Zealand NBL':'紐西蘭NBL','Australian NBL':'澳洲NBL','NBA':'NBA'};
+function lgName(s){return LGCN[s]||s||'賽事';}
+function fetchDay(d,sportName,sp){return fetch(API+'/eventsday.php?d='+d+'&s='+sportName).then(r=>r.json()).then(j=>(j.events||[]).map(e=>({id:e.idEvent,lgcn:lgName(e.strLeague),wc:e.idLeague==='4429',sport:sp,home:e.strHomeTeam,away:e.strAwayTeam,ts:e.strTimestamp?new Date(e.strTimestamp+(e.strTimestamp.endsWith('Z')?'':'Z')):new Date(e.dateEvent+'T'+(e.strTime||'00:00:00')+'Z')}))).catch(function(){return[];});}
+async function fetchLeague(lg,sp){try{const r=await fetch(API+'/eventsnextleague.php?id='+lg.id);const d=await r.json();return(d.events||[]).map(e=>({id:e.idEvent,lgcn:lg.cn,wc:!!lg.wc,sport:sp,home:e.strHomeTeam,away:e.strAwayTeam,ts:e.strTimestamp?new Date(e.strTimestamp+(e.strTimestamp.endsWith('Z')?'':'Z')):new Date(e.dateEvent+'T'+(e.strTime||'00:00:00')+'Z')}));}catch(e){return[];}}
+async function loadFix(sp){const c=DB.cache(sp);if(c&&(Date.now()-c.at<CACHE_MIN*60e3)){FIX[sp]=c.fx.map(f=>({...f,ts:new Date(f.ts)}));return;}const sportName=sp==='soccer'?'Soccer':'Basketball';const base=Date.now();const days=[];for(let i=0;i<10;i++){days.push(new Date(base+i*864e5).toISOString().slice(0,10));}const dayRes=await Promise.all(days.map(d=>fetchDay(d,sportName,sp)));const lgRes=await Promise.all(SPORTS[sp].leagues.map(l=>fetchLeague(l,sp)));const all=[...dayRes.flat(),...lgRes.flat()];const now=Date.now();const seen={};const uniq=[];all.filter(f=>f.ts&&!isNaN(f.ts.getTime())&&f.ts.getTime()>now-4*3600e3&&f.home&&f.away).sort((a,b)=>a.ts-b.ts).forEach(function(f){if(!seen[f.id]){seen[f.id]=1;uniq.push(f);}});FIX[sp]=uniq.slice(0,40);DB.saveCache(sp,{at:Date.now(),fx:FIX[sp]});}
+function hkT(d){return d.toLocaleString('zh-HK',{timeZone:'Asia/Hong_Kong',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).replace(/(\d+)\/(\d+)/,'$1月$2日 ');}
+function ini(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();}
+function started(g){return g.ts.getTime()<Date.now();}
+function isToday(g){return g.ts.toDateString()===new Date().toDateString();}
+function cats(){return SPORT==='soccer'?[['all','全部'],['today','今日'],['live','即場'],['hot','熱門'],['early','早盤'],['wc','世界盃 🏆']]:[['all','全部'],['today','今日'],['live','即場'],['early','早盤']];}
+function renderCats(){const box=document.getElementById('cats');box.innerHTML='';cats().forEach(function(a){const k=a[0],l=a[1];const d=document.createElement('div');d.className='cat'+(k===CAT?' on':'')+(k==='wc'?' wc':'');d.textContent=l;d.onclick=function(){CAT=k;renderCats();renderGames();};box.appendChild(d);});}
+function filterFix(){let list=FIX[SPORT];if(CAT==='all')return list;if(CAT==='today')return list.filter(isToday);if(CAT==='live')return list.filter(started);if(CAT==='early')return list.filter(g=>!started(g)&&!isToday(g));if(CAT==='hot'){const h=list.filter(g=>g.wc||/巴西|阿根廷|美職|中超|瑞典|挪|Brazil|Argentin|USL|MLS|Major|World|Champions|Serie A/i.test(g.lgcn));return(h.length?h:list).slice(0,10);}if(CAT==='wc')return list.filter(g=>g.wc);return list;}
+let curMkt={};
+function setSport(sp){SPORT=sp;CAT='all';document.querySelectorAll('.sport').forEach(e=>e.classList.toggle('on',e.dataset.sp===sp));renderCats();document.getElementById('gameList').innerHTML='<div class="loading">🌊 攞緊賽事…</div>';loadFix(sp).then(function(){renderGames();return settleAll();});}
+function renderGames(){const m=me(),list=document.getElementById('gameList');if(!m)return;let head='';if(SPORT==='soccer'&&CAT==='wc')head=outrightCard();const gs=filterFix();if(!gs.length){list.innerHTML=head+'<div class="card"><div class="loading">'+(SPORT==='basket'?'籃球暑期休賽，暫無賽事 🏀🌙':'呢個分類暫時冇賽事 🌙')+'<br><small>過陣再返嚟睇</small></div></div>';return;}list.innerHTML=head+gs.map(g=>gameCard(g,m)).join('');}
+function gameCard(g,m){const st=started(g);const mk=curMkt[g.id]||'1x2';const markets=g.sport==='soccer'?['1x2','ou','hdp','cs']:['1x2'];const tabs=markets.map(k=>'<div class="mk-tab '+(k===mk?'on':'')+'" onclick="pickMkt(\''+g.id+'\',\''+k+'\')">'+MK[k].name+' <span class="pt">+'+MK[k].pt+'</span></div>').join('');const pk=(m.picks[g.id]||{})[mk];let body=marketBody(g,mk,pk,st,m);let stat='';const anyPk=m.picks[g.id]||{};const settledInfo=Object.entries(anyPk).filter(e=>e[1].settled);if(settledInfo.length){stat='<div class="mstat done">賽果 <b>'+(anyPk[Object.keys(anyPk)[0]].score||'')+'</b> · '+settledInfo.map(e=>MK[e[0]].name+(e[1].won?' ✅+'+e[1].gain:' ✗')).join('　')+'</div>';}else if(st){stat='<div class="mstat">已開賽 — 呢場唔估得</div>';}return '<div class="card"><div class="m-lg"><span>'+(g.wc?'🏆 ':'')+g.lgcn+'</span><span class="'+(st?'live':'')+'">'+(st?'● 進行中':hkT(g.ts))+'</span></div><div class="teams"><div class="team"><div class="fl">'+ini(g.home)+'</div><div class="nm">'+g.home+'</div></div><div class="vs">VS</div><div class="team"><div class="fl">'+ini(g.away)+'</div><div class="nm">'+g.away+'</div></div></div><div class="mk-tabs">'+tabs+'</div>'+body+stat+'</div>';}
+function marketBody(g,mk,pk,st,m){const lock=(pk&&pk.locked)||st;const sel=v=>pk&&pk.sel===v?'sel':'';const win=v=>pk&&pk.settled&&pk.result===v?'win':'';const L=lock?'locked':'';if(mk==='1x2')return '<div class="opts c3">'+['home','draw','away'].map(k=>'<div class="opt '+sel(k)+' '+win(k)+' '+L+'" onclick="pick(\''+g.id+'\',\'1x2\',\''+k+'\')"><div class="l">'+(k==='home'?'主勝':k==='draw'?'和':'客勝')+'</div><div class="s">'+(k==='draw'?g.home+' / '+g.away:(k==='home'?g.home:g.away))+'</div></div>').join('')+'</div>';if(mk==='ou')return '<div class="opts c2">'+['over','under'].map(k=>'<div class="opt '+sel(k)+' '+win(k)+' '+L+'" onclick="pick(\''+g.id+'\',\'ou\',\''+k+'\')"><div class="l">'+(k==='over'?'大 (>2.5)':'細 (<2.5)')+'</div><div class="s">總入球</div></div>').join('')+'</div>';if(mk==='hdp')return '<div class="opts c2">'+['h','a'].map(k=>'<div class="opt '+sel(k)+' '+win(k)+' '+L+'" onclick="pick(\''+g.id+'\',\'hdp\',\''+k+'\')"><div class="l">'+(k==='h'?g.home+' -1':g.away+' +1')+'</div><div class="s">'+(k==='h'?'贏2球或以上':'輸1球內/贏/和')+'</div></div>').join('')+'</div>';if(mk==='cs'){if(pk){const cls=pk.settled?(pk.won?'win':'locked'):'';return '<div class="opt '+cls+'" style="cursor:default"><div class="l">你估：'+pk.sel+'</div><div class="s">'+(pk.settled?(pk.won?'估中！+'+pk.gain:'唔中，賽果 '+pk.score):'等結算')+'</div></div>';}if(st)return '<div class="mstat">已開賽</div>';return '<div class="cs"><input id="cs_h_'+g.id+'" type="number" min="0" placeholder="0"><span class="x">:</span><input id="cs_a_'+g.id+'" type="number" min="0" placeholder="0"></div><div class="mstat">估正確比數，估中 +150（最抵）</div><button class="btn cs-btn" onclick="pickCS(\''+g.id+'\')">落我嘅波膽</button>';}return '';}
+function pickMkt(gid,k){curMkt[gid]=k;renderGames();}
+function pick(gid,mk,sel){const m=me();const g=FIX[SPORT].find(f=>f.id===gid);if(!g||started(g))return;m.picks[gid]=m.picks[gid]||{};if(m.picks[gid][mk]&&m.picks[gid][mk].locked)return;m.picks[gid][mk]={sel:sel,locked:true,settled:false,mk:mk,home:g.home,away:g.away,lgcn:g.lgcn,sport:g.sport};saveMe(m);renderGames();toast('落咗 '+MK[mk].name+' 📌 完場自動對賽果');}
+function pickCS(gid){const m=me();const g=FIX[SPORT].find(f=>f.id===gid);if(!g||started(g))return;const h=document.getElementById('cs_h_'+gid).value,a=document.getElementById('cs_a_'+gid).value;if(h===''||a===''){toast('請填晒兩隊比數');return;}m.picks[gid]=m.picks[gid]||{};m.picks[gid]['cs']={sel:h+'-'+a,locked:true,settled:false,mk:'cs',home:g.home,away:g.away,lgcn:g.lgcn,sport:g.sport};saveMe(m);renderGames();toast('落咗波膽 📌 '+h+'-'+a);}
+function outrightCard(){const m=me();const picked=m.outrights['wc2026'];const teams=[...new Set(FIX.soccer.filter(g=>g.wc).flatMap(g=>[g.home,g.away]))].slice(0,8);if(!teams.length)return '';if(picked)return '<div class="card"><div class="sect-t" style="margin-top:0">🏆 世界盃奪冠預測</div><div class="mstat mine">你揀咗：<b>'+picked+'</b> 奪冠 · 決賽後派 +500 分</div></div>';return '<div class="card"><div class="sect-t" style="margin-top:0">🏆 邊隊贏世界盃？（+500）</div><div class="out-grid">'+teams.map(t=>'<div class="out" onclick="pickOut(\''+t.replace(/'/g,'')+'\')">'+t+'</div>').join('')+'</div><div class="mstat">揀一次，決賽後自動派分</div></div>';}
+function pickOut(team){const m=me();m.outrights['wc2026']=team;saveMe(m);renderGames();toast('你揀咗 '+team+' 奪冠 🏆');}
+async function settleAll(){const m=me();if(!m)return;const pend=[];Object.entries(m.picks).forEach(function(e){const gid=e[0];Object.entries(e[1]).forEach(function(x){if(!x[1].settled)pend.push([gid,x[0],x[1]]);});});if(!pend.length)return;const ids=[...new Set(pend.map(x=>x[0]))];const scores={};for(const id of ids){try{const r=await fetch(API+'/lookupevent.php?id='+id);const d=await r.json();const e=d.events&&d.events[0];if(e&&e.intHomeScore!==null&&e.intHomeScore!==''&&e.intAwayScore!==null&&e.intAwayScore!=='')scores[id]={h:+e.intHomeScore,a:+e.intAwayScore};}catch(e){}}let changed=false,msgs=[];for(const item of pend){const gid=item[0],mk=item[1],p=item[2];const s=scores[gid];if(!s)continue;const won=judge(mk,p.sel,s);p.settled=true;p.score=s.h+'-'+s.a;p.result=resultFor(mk,s);m.played++;m.mk[mk]=m.mk[mk]||{c:0,t:0};m.mk[mk].t++;let gain=0;if(won){m.correct++;m.mk[mk].c++;m.streak++;if(m.streak>m.best)m.best=m.streak;gain=MK[mk].pt+(m.streak>=2?STREAK_BONUS:0);m.pts+=gain;msgs.push('✅ '+p.home+' '+p.score+' '+p.away+' · '+MK[mk].name+' +'+gain);}else{m.streak=0;msgs.push('◽ '+p.home+' '+p.score+' '+p.away+' · '+MK[mk].name+' 未中');}p.won=won;p.gain=gain;m.hist.unshift({home:p.home,away:p.away,mk:mk,sel:p.sel,score:p.score,won:won,gain:gain,lg:p.lgcn});m.hist=m.hist.slice(0,25);changed=true;}if(changed){saveMe(m);renderAll();toast(msgs.slice(0,4).join('<br>'));}}
+function resultFor(mk,s){if(mk==='1x2')return s.h>s.a?'home':s.h<s.a?'away':'draw';if(mk==='ou')return(s.h+s.a)>2.5?'over':'under';if(mk==='hdp')return(s.h-1)>s.a?'h':(s.h-1)<s.a?'a':'push';if(mk==='cs')return s.h+'-'+s.a;}
+function judge(mk,sel,s){if(mk==='cs')return sel===s.h+'-'+s.a;return sel===resultFor(mk,s);}
+function renderAll(){renderTop();renderGames();renderStats();renderMe();}
+function renderTop(){const m=me();if(m)document.getElementById('upts').textContent=m.pts;}
+function renderStats(){const m=me();if(!m)return;document.getElementById('stPts').textContent=m.pts;document.getElementById('stRate').textContent=m.played?Math.round(m.correct/m.played*100)+'%':'—';document.getElementById('stStreak').textContent=m.streak||0;document.getElementById('stBest').textContent=m.best||0;const brk=document.getElementById('brkBox');brk.innerHTML=Object.keys(MK).map(k=>{const s=m.mk[k]||{c:0,t:0};return '<div class="brk"><span>'+MK[k].name+'</span><b>'+(s.t?Math.round(s.c/s.t*100)+'%':'—')+' <span style="color:var(--muted);font-weight:400">('+s.c+'/'+s.t+')</span></b></div>';}).join('');const box=document.getElementById('histBox');if(!m.hist||!m.hist.length){box.innerHTML='<div class="loading">未有紀錄，去「賽事」估返場先！</div>';return;}box.innerHTML=m.hist.map(h=>'<div class="hist-row"><div>'+(h.won?'✅':'◽')+'</div><div class="hist-t">'+h.home+' <b>'+h.score+'</b> '+h.away+'<small>'+h.lg+' · '+MK[h.mk].name+'：'+h.sel+'</small></div><div class="hist-p '+(h.won?'':'miss')+'">'+(h.won?'+'+h.gain:'0')+'</div></div>').join('');}
+function renderMe(){const m=me();if(!m)return;document.getElementById('meName').textContent=DB.session();document.getElementById('mePts').textContent=m.pts;document.getElementById('mePlayed').textContent=m.played;}
+function go(v){document.querySelectorAll('nav .tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));document.getElementById('view-games').classList.toggle('hidden',v!=='games');document.getElementById('view-stats').classList.toggle('hidden',v!=='stats');document.getElementById('view-me').classList.toggle('hidden',v!=='me');if(v==='stats')renderStats();if(v==='me')renderMe();window.scrollTo(0,0);}
+function enter(){document.getElementById('auth').classList.add('hidden');document.getElementById('main').classList.remove('hidden');document.getElementById('nav').classList.remove('hidden');document.getElementById('uname').textContent=DB.session();renderCats();renderAll();go('games');loadFix('soccer').then(function(){renderGames();return settleAll();});}
+let _tt=null;
+function toast(h){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}t.innerHTML=h;t.style.display='block';clearTimeout(_tt);_tt=setTimeout(function(){t.style.display='none';},5200);}
+(function(){const us=DB.users();let ch=false;Object.values(us).forEach(function(u){if(u.mk===undefined){u.mk={};ch=true;}if(u.outrights===undefined){u.outrights={};ch=true;}if(u.streak===undefined){u.streak=0;u.best=0;u.hist=u.hist||[];ch=true;}if(u.picks)Object.keys(u.picks).forEach(function(gid){const p=u.picks[gid];if(p&&p.sel&&!p['1x2']&&['home','draw','away'].indexOf(p.sel)>=0){u.picks[gid]={'1x2':{sel:p.sel,settled:p.settled,result:p.result,score:p.score,won:p.won,gain:p.gain,mk:'1x2',locked:true,home:p.home,away:p.away,lgcn:p.lgcn}};ch=true;}});});if(ch)DB.saveUsers(us);})();
+renderAuth();
+const q=new URLSearchParams(location.search);
+if(q.get('demo')==='1'){const us=DB.users();if(!us['海洋玩家'])us['海洋玩家']=newUser('x');DB.saveUsers(us);DB.setSession('海洋玩家');}
+if(DB.session()&&DB.users()[DB.session()]){enter();if(q.get('view'))go(q.get('view'));}
+</script>
+</body>
+</html>
