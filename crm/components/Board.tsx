@@ -56,23 +56,28 @@ function CardBody({ c }: { c: BoardCard }) {
   );
 }
 
-function DraggableCard({ c, readOnly }: { c: BoardCard; readOnly: boolean }) {
+// 精簡版（四季頁）：淨係人名；綠色＝具備簽單條件，詳情撳入去先睇
+function NameOnly({ c }: { c: BoardCard }) {
+  return <span className="name">{c.name || "（未命名）"}</span>;
+}
+
+function DraggableCard({ c, readOnly, compact }: { c: BoardCard; readOnly: boolean; compact: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: c.id, disabled: readOnly });
   return (
     <Link
       href={`/clients/${c.id}`}
       ref={setNodeRef}
-      className={`client-card${c.ready ? " ready" : ""}${isDragging ? " dragging" : ""}`}
+      className={`client-card${compact ? " compact" : ""}${c.ready ? " ready" : ""}${isDragging ? " dragging" : ""}`}
       data-testid="client-card"
       {...(readOnly ? {} : listeners)}
       {...(readOnly ? {} : attributes)}
     >
-      <CardBody c={c} />
+      {compact ? <NameOnly c={c} /> : <CardBody c={c} />}
     </Link>
   );
 }
 
-function Column({ col, cards, readOnly }: { col: BoardColumn; cards: BoardCard[]; readOnly: boolean }) {
+function Column({ col, cards, readOnly, compact }: { col: BoardColumn; cards: BoardCard[]; readOnly: boolean; compact: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key, disabled: readOnly });
   return (
     <section ref={setNodeRef} className={`column${isOver ? " over" : ""}${col.done ? " column-done" : ""}`} data-stage={col.key}>
@@ -80,11 +85,11 @@ function Column({ col, cards, readOnly }: { col: BoardColumn; cards: BoardCard[]
         <span>{col.label}</span>
         <span className="badge badge-grey">{cards.length}</span>
       </div>
-      {col.hint && <p className="column-hint">{col.hint}</p>}
+      {!compact && col.hint && <p className="column-hint">{col.hint}</p>}
       {cards.map((c) => (
-        <DraggableCard key={c.id} c={c} readOnly={readOnly} />
+        <DraggableCard key={c.id} c={c} readOnly={readOnly} compact={compact} />
       ))}
-      {cards.length === 0 && <p className="muted small" style={{ padding: "0 6px" }}>（冇）</p>}
+      {!compact && cards.length === 0 && <p className="muted small" style={{ padding: "0 6px" }}>（冇）</p>}
     </section>
   );
 }
@@ -103,11 +108,14 @@ export default function Board({
   readOnly = false,
   groupBy = "stage",
   columns = STAGE_COLUMNS,
+  compact = false,
 }: {
   cards: BoardCard[];
   readOnly?: boolean;
   groupBy?: "stage" | "season";
   columns?: BoardColumn[];
+  /** true = 淨係顯示人名，格仔排成 2×2（手機一版睇晒） */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [cards, setCards] = useState(initial);
@@ -196,15 +204,15 @@ export default function Board({
         </p>
       )}
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveId(null)}>
-        <div className="board">
+        <div className={compact ? "board board-compact" : "board"}>
           {columns.map((col) => (
-            <Column key={col.key} col={col} cards={cards.filter((c) => colOf(c) === col.key)} readOnly={readOnly} />
+            <Column key={col.key} col={col} cards={cards.filter((c) => colOf(c) === col.key)} readOnly={readOnly} compact={compact} />
           ))}
         </div>
         <DragOverlay>
           {active ? (
-            <div className={`client-card drag-overlay${active.ready ? " ready" : ""}`}>
-              <CardBody c={active} />
+            <div className={`client-card drag-overlay${compact ? " compact" : ""}${active.ready ? " ready" : ""}`}>
+              {compact ? <NameOnly c={active} /> : <CardBody c={active} />}
             </div>
           ) : null}
         </DragOverlay>
