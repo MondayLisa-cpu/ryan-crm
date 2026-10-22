@@ -7,6 +7,8 @@ import { decryptColumn, encryptColumn } from "../secure";
 import { ALL_CHECKS, FORMS, GENDERS, MARITAL, STAGES, type FormColumn } from "../stages";
 import { SEASONS } from "../seasons";
 import { shortDate } from "../weeks";
+import { CATEGORIES, PLAN_STAGES, STATUSES } from "../planner";
+import type { PreparedTask } from "./tasks";
 import type { Extraction } from "./schema";
 
 export type ClientTarget =
@@ -15,7 +17,7 @@ export type ClientTarget =
   | { mode: "new"; id: string; name: string }
   | { mode: "ambiguous"; name: string; candidates: string[] };
 
-export type Draft = { texts: string[]; today: string; extraction: Extraction; target: ClientTarget };
+export type Draft = { texts: string[]; today: string; extraction: Extraction; target: ClientTarget; taskItems?: PreparedTask[] };
 
 const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
 
@@ -59,6 +61,7 @@ const NUM = /^-?\d+(\.\d+)?$/;
 export function hasContent(d: Draft): boolean {
   const e = d.extraction;
   return (
+    Boolean(e.tasks?.length) ||
     d.target.mode === "existing" ||
     d.target.mode === "new" ||
     ACTIVITIES.some((a) => e.activity[a.key] > 0) ||
@@ -69,6 +72,9 @@ export function hasContent(d: Draft): boolean {
 /** 俾員工睇嘅確認訊息 */
 export function describeDraft(d: Draft): string {
   const e = d.extraction;
+  if (e.tasks?.length) return ["幫你整理咗（未儲存）：", ...e.tasks.map(t =>
+    `${t.day} · ${CATEGORIES[t.category]} · ${t.name}\n${PLAN_STAGES[t.stage]}｜${STATUSES[t.status]}\n計劃：${t.plan}${t.result ? `\n結果：${t.result}` : ""}`),
+    "今次只更新待辦；預計 stage 唔會改動客戶目前進度。", "回覆「確認」儲存，「取消」放棄；想補充就直接再講。"].join("\n\n");
   const lines: string[] = ["📝 幫你整理咗（未儲存）："];
   if (d.target.mode === "existing") lines.push(`客戶：${d.target.name}`);
   if (d.target.mode === "new") {
@@ -108,9 +114,15 @@ export function describeDraft(d: Draft): string {
 const stamp = (date: string) => `〔${shortDate(date)}〕`;
 
 /** 將草稿寫入資料庫（經 service role 嘅 wa_* 函數，以員工身份寫入並記審計） */
-export async function applyDraft(admin: SupabaseClient, ownerId: string, d: Draft): Promise<void> {
+export async function applyDraft(admin: SupabaseClient, ownerId: string, d: Draft, draftId?: string): Promise<void> {
   const e = d.extraction;
 
+  if (e.tasks?.length) {
+    if (!draftId || !d.taskItems?.length) throw new Error("請重新提交待辦訊息，再確認。");
+    const { error } = await admin.rpc("wa_save_tasks", { p_actor: ownerId, p_draft: draftId, p_items: d.taskItems });
+    if (error) throw new Error("待辦儲存失敗，請重新整理或稍後再試。");
+    return;
+  }
   if (d.target.mode === "existing" || d.target.mode === "new") {
     const id = d.target.id;
     let row: Record<string, unknown> = {};
@@ -183,3 +195,4 @@ export async function applyDraft(admin: SupabaseClient, ownerId: string, d: Draf
     if (error) throw new Error("寫入活動分失敗：" + error.message);
   }
 }
+

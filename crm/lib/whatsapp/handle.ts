@@ -5,12 +5,14 @@ import { addDays, hkToday, isDate } from "../weeks";
 import { AiRefusal, extractFromMessage } from "./ai";
 import { applyDraft, describeDraft, hasContent, loadClientNames, matchClient, type Draft } from "./apply";
 import { latestPending, reopen, sealDraft, setStatus } from "./drafts";
+import { decryptColumn } from "../secure";
+import { prepareTasks } from "./tasks";
 import { sendText } from "./send";
 
 export type Incoming = { from: string; messageId: string; type: string; text: string };
 
 const HELP = `👋 我係團隊跟客助手。
-見完客之後，直接打字話我知見客內容，例如：
+朝早講計劃，例如「今日邀約 Mary，打算了解需要」。做完講「今日邀約 Mary 已完成，約咗星期五見」。亦可以記詳細見客內容，例如：
 「今日同陳大文食午餐，35歲會計師，已婚有個仔。佢好信任我，月入5萬，想幫個仔儲教育基金。開咗口，下星期三再見」
 
 我會整理好再問你確認，回覆「確認」就會寫入 app。
@@ -60,13 +62,13 @@ export async function handleIncoming(msg: Incoming): Promise<void> {
       return sendText(msg.from, `仲未知係邊個客（${pending.draft.target.candidates.join("、")}），請先講全名。`);
     if (!(await setStatus(admin, pending.id, "applied"))) return;
     try {
-      await applyDraft(admin, agent.id, pending.draft);
+      await applyDraft(admin, agent.id, pending.draft, pending.id);
     } catch (e) {
       await reopen(admin, pending.id);
       return sendText(msg.from, `⚠️ 儲存失敗：${(e as Error).message}\n可以再回覆「確認」試多次。`);
     }
     const t = pending.draft.target;
-    const link = t.mode === "existing" || t.mode === "new" ? `${appUrl()}/clients/${t.id}` : `${appUrl()}/activity`;
+    const link = pending.draft.extraction.tasks?.length ? `${appUrl()}/today` : t.mode === "existing" || t.mode === "new" ? `${appUrl()}/clients/${t.id}` : `${appUrl()}/activity`;
     return sendText(msg.from, `✅ 已儲存${t.mode === "existing" || t.mode === "new" ? `到「${t.name}」` : ""}。\n${link}`);
   }
 
@@ -93,6 +95,20 @@ export async function handleIncoming(msg: Incoming): Promise<void> {
   // 日期只接受今日前後 60 日內，否則當今日
   if (!isDate(extraction.date) || extraction.date < addDays(today, -60) || extraction.date > addDays(today, 60)) extraction.date = today;
 
+  if (extraction.tasks?.length) {
+    try {
+      if (extraction.tasks.some(t => t.day < addDays(today,-60) || t.day > addDays(today,60)))
+        return sendText(msg.from, "待辦日期要喺今日前後 60 日內，請確認日期再提交。");
+      const taskItems = await prepareTasks(admin, agent.id, extraction.tasks);
+      extraction.tasks = extraction.tasks.map((t,i) => {
+        const original = decryptColumn(taskItems[i].id,"info",taskItems[i].info);
+        return { ...t, name:original.name, plan:original.plan };
+      });
+      const draft: Draft = { texts, today, extraction, target: { mode: "none" }, taskItems };
+      await saveDraft(admin, agent.id, draft, recent?.id);
+      return sendText(msg.from, describeDraft(draft));
+    } catch (e) { return sendText(msg.from, (e as Error).message); }
+  }
   const clients = await loadClientNames(admin, agent.id);
   const prevTarget = recent?.draft.target;
   const target =
@@ -123,3 +139,4 @@ async function saveDraft(admin: ReturnType<typeof createAdminClient>, ownerId: s
   const { error } = await admin.from("wa_drafts").insert({ id, owner_id: ownerId, payload: sealDraft(id, draft) });
   if (error) throw new Error(error.message);
 }
+
