@@ -42,11 +42,11 @@ export default async function WhatsappPage() {
             )}
             。
           </li>
-          <li>見完客直接打字講內容（可以用手機鍵盤🎤語音輸入），例如：「今日同陳大文食午餐，35 歲會計師，已婚。佢好信任我，想幫個仔儲教育基金，開咗口，下星期三再見」。</li>
+          <li>朝早講「今日邀約 Mary，打算了解需要」；做完講「今日邀約 Mary 已完成，約咗星期五見」。更新舊待辦時講埋原定日期同工作欄。</li>
           <li>助手會整理好、列出會寫入邊幾格，你回覆「確認」先會儲存；「取消」就放棄。都可以喺下面確認。</li>
         </ol>
         <p className="muted small" style={{ marginBottom: 0 }}>
-          長文字欄位會加喺原有內容後面（標日期），唔會覆蓋舊資料；簽單條件只會剔，唔會剔走。所有改動都有審計記錄（標明經 WhatsApp）。
+          計劃同完成結果分開記；更新待辦唔會將預計 stage 當成客戶目前進度。詳細見客紀錄可以另外提交。
         </p>
       </div>
 
@@ -62,6 +62,7 @@ export default async function WhatsappPage() {
               <span className={`badge ${st.cls}`}>{st.label}</span>
               <span className="muted small">{fmt(d.created_at)}</span>
               <span className="spacer" />
+              {d.status === "applied" && draft.extraction.tasks?.length ? <Link href="/today">打開每日待辦</Link> : null}
               {d.status === "applied" && (t.mode === "existing" || t.mode === "new") && <Link href={`/clients/${t.id}`}>打開客戶卡 →</Link>}
             </div>
             <details>
@@ -70,7 +71,7 @@ export default async function WhatsappPage() {
             </details>
             <div className="wa-text">
               {describeDraft(draft)
-                .replace(/^📝 幫你整理咗（未儲存）：\n/, "")
+                .replace(/^(?:📝 )?幫你整理咗（未儲存）：\n+/, "")
                 .replace(/\n回覆「確認」.*$/s, "")}
             </div>
             {d.status === "pending" && <DraftButtons id={d.id} />}
@@ -80,3 +81,4 @@ export default async function WhatsappPage() {
     </div>
   );
 }
+

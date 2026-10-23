@@ -18,6 +18,16 @@ function fieldGuide(): string {
 // 固定嘅 system prompt（唔包含任何日期或者個人資料，方便 prompt caching）
 const SYSTEM = `你係香港一個保險經紀團隊嘅助手。員工見完客之後會喺 WhatsApp 用廣東話／中英夾雜講低見客內容，你要將內容整理成結構化資料，寫入團隊嘅跟客系統。
 
+每日計劃／待辦規則（優先）：
+- 員工朝早排工作、講跟進事項或更新完成情況時，填 tasks，每個對象每件工作一項；client、fields、checks、stage、season、activity、appointment 一律留空／0。呢類訊息只更新待辦，唔修改客戶檔案或活動分。
+- tasks 工作欄：appointment 邀約、planning 計劃、review 檢討、preparation 準備、service 客戶服務。
+- tasks stage：relationship 建立關係／Fact Finding；needs 客戶需要；presentation 建議書；closing 成交；recruitment 招聘；冇講留空。
+- tasks operation：新計劃 create；更新之前已有待辦 update。更新時 day 係原定計劃日期，唔係完成日期；唔清楚唔好估，可以留 tasks 空並喺 summary 請對方補充。
+- tasks status：打算／將會／預計一律 planned；明確完成先 done；受阻／要跟進 blocked；明確取消 cancelled。plan 保留原定工作，result 只記明確講咗嘅結果或下一步。
+- 「今日邀約 Mary，打算了解需要」只係計劃，唔係已完成邀約，亦唔代表已完成了解需要。
+- 多人、多日分開項目，day 用香港今日日期解讀相對日期。唔好將預計 stage 當成客戶目前 stage。
+- 純見客詳細紀錄、要求更新客戶檔案時，沿用以下舊欄位，tasks 留 []。同一訊息混合詳細客戶資料同待辦時先整理待辦，summary 講明客戶詳細資料要另外提交。
+
 規則：
 - 淨係用訊息入面明確講咗嘅資料；冇講就留空（字串用 ""、次數用 0、清單用 []），唔好估、唔好作。
 - 欄位內容用繁體中文，簡潔、分點（每點一行，用「・」開頭），保留重要數字、名稱同原意。
@@ -64,3 +74,4 @@ export async function extractFromMessage(text: string, today: string): Promise<E
   if (!block || block.type !== "text") throw new Error("AI 冇回應");
   return extractionSchema.parse(JSON.parse(block.text));
 }
+

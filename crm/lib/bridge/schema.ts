@@ -2,6 +2,9 @@ import { z } from "zod";
 import { INFO_KEYS, FORMS, CHECK_KEYS, formFieldKeys, GENDERS, MARITAL } from "../stages";
 import { BridgeError } from "./auth";
 
+import { taskMessageSchema } from "../whatsapp/tasks";
+import { isDate } from "../weeks";
+
 const plain = z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), z.string().max(5000));
 export const patchSchema = z.object({
   info: plain.optional(),
@@ -11,6 +14,11 @@ export const patchSchema = z.object({
   season: z.enum(["SPRING","SUMMER","AUTUMN","WINTER"]).nullable().optional(),
 }).strict().refine(v => Object.keys(v).length > 0, "修改內容唔可以留空");
 export const commandSchema = z.discriminatedUnion("action", [
+  z.object({action:z.literal("tasks_list"),from:z.string().refine(isDate),to:z.string().refine(isDate),owner_id:z.string().uuid().optional()}).strict(),
+  z.object({action:z.literal("tasks_prepare"),tasks:z.array(taskMessageSchema.strict()).min(1).max(30)}).strict(),
+  z.object({action:z.literal("tasks_confirm"),draft_id:z.string().uuid()}).strict(),
+  z.object({action:z.literal("tasks_status"),draft_id:z.string().uuid()}).strict(),
+  z.object({action:z.literal("tasks_cancel"),draft_id:z.string().uuid()}).strict(),
   z.object({action:z.literal("whoami")}).strict(),
   z.object({action:z.literal("schema")}).strict(),
   z.object({action:z.literal("staff")}).strict(),

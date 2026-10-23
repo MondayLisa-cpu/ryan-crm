@@ -25,12 +25,15 @@ export async function decideDraftAction(id: string, decision: "apply" | "cancel"
   if (draft.target.mode === "ambiguous") return { ok: false, message: "未確定係邊個客，請喺 WhatsApp 講全名" };
   if (!(await setStatus(admin, id, "applied"))) return { ok: false, message: "呢份已經處理咗" };
   try {
-    await applyDraft(admin, profile.id, draft);
+    await applyDraft(admin, profile.id, draft, id);
   } catch (e) {
     await reopen(admin, id);
     return { ok: false, message: "儲存失敗：" + (e as Error).message };
   }
   revalidatePath("/whatsapp");
   revalidatePath("/board");
+  revalidatePath("/today");
+  revalidatePath("/review");
   return { ok: true, message: "已儲存" };
 }
+

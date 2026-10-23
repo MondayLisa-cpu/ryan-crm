@@ -7,6 +7,9 @@ import { encryptColumn, decryptColumn } from "../secure";
 import { encryptValue, parseKey } from "../crypto";
 import { INFO_KEYS, FORMS, CHECK_KEYS, formFieldKeys } from "../stages";
 
+import { handleTaskCommand } from "./tasks";
+import { CATEGORIES, PLAN_STAGES, STATUSES } from "../planner";
+
 type Row=Record<string,unknown> & {id:string;owner_id:string;updated_at:string};
 const columns=["info",...FORMS.map(f=>f.column)];
 function decode(row:Row) {
@@ -42,8 +45,9 @@ export async function handleCommand(admin:SupabaseClient, identity:Identity, raw
   const {data:profile,error:profileError}=await admin.from("profiles").select("id,full_name,role,active,whatsapp").eq("id",identity.id).maybeSingle();
   databaseError(profileError);
   if(!profile?.active || profile.role!==identity.role || (profile.whatsapp && profile.whatsapp!==identity.phone)) throw new BridgeError(403,"帳戶已停用、角色改變或號碼綁定唔一致");
+  if(c.action==="tasks_list"||c.action==="tasks_prepare"||c.action==="tasks_confirm"||c.action==="tasks_cancel"||c.action==="tasks_status") return handleTaskCommand(admin,identity,c);
   if(c.action==="whoami") return {name:profile.full_name,profile_id:identity.id,role:identity.role,scope:identity.role==="admin"?"team_clients":"own_clients"};
-  if(c.action==="schema") return {info:INFO_KEYS,forms:FORMS.map(f=>({column:f.column,title:f.title,fields:f.sections.flatMap(s=>s.fields),keys:formFieldKeys(f)})),checks:CHECK_KEYS,actions:["whoami","schema","list","get","create","update","delete",...(identity.role==="admin"?["staff"]:[])]};
+  if(c.action==="schema") return {planner:{categories:CATEGORIES,stages:PLAN_STAGES,statuses:STATUSES,write_scope:"own_tasks",flow:"tasks_prepare → show preview → explicit confirmation → tasks_confirm",commands:{tasks_list:{required:["from","to"],optional:["owner_id"],date_format:"YYYY-MM-DD",max_days:31},tasks_prepare:{required:["tasks"],max_tasks:30,task_fields:["operation","day","category","stage","name","plan","status","result"],operations:["create","update"],update_matching:"Read tasks_list first; use original day/category/name/stage/plan. Only status and result change."},tasks_confirm:{required:["draft_id"],requires:"explicit confirmation after preview"},tasks_cancel:{required:["draft_id"]},tasks_status:{required:["draft_id"],saved:"true only after a database receipt exists"}}},info:INFO_KEYS,forms:FORMS.map(f=>({column:f.column,title:f.title,fields:f.sections.flatMap(s=>s.fields),keys:formFieldKeys(f)})),checks:CHECK_KEYS,actions:["tasks_status","tasks_list","tasks_prepare","tasks_confirm","tasks_cancel","whoami","schema","list","get","create","update","delete",...(identity.role==="admin"?["staff"]:[])]};
   if(c.action==="staff") {
     if(identity.role!=="admin") throw new BridgeError(403,"只限主管");
     const {data,error}=await admin.from("profiles").select("id,full_name,role,active").order("full_name");databaseError(error);return {staff:data};

@@ -1,5 +1,6 @@
 // AI 由 WhatsApp 訊息抽出嚟嘅結構（同時用嚟做 JSON schema 同驗證）
 import { z } from "zod";
+import { taskMessageSchema } from "./tasks";
 import { ACTIVITY_KEYS } from "../activity";
 import { CHECK_KEYS, FORMS, GENDERS, MARITAL, STAGE_KEYS } from "../stages";
 import { SEASONS } from "../seasons";
@@ -31,6 +32,7 @@ export const extractionSchema = z.object({
   appointment: z.object({ slot: z.enum(["", ...APPT_KEYS]), text: z.string() }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   summary: z.string(),
+  tasks: z.array(taskMessageSchema).max(30).optional(),
 });
 
 export type Extraction = z.infer<typeof extractionSchema>;
@@ -39,7 +41,7 @@ export type Extraction = z.infer<typeof extractionSchema>;
 export const extractionJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["client", "fields", "checks", "stage", "season", "activity", "appointment", "date", "summary"],
+  required: ["client", "fields", "checks", "stage", "season", "activity", "appointment", "date", "summary", "tasks"],
   properties: {
     client: {
       type: "object",
@@ -79,5 +81,16 @@ export const extractionJsonSchema = {
     },
     date: { type: "string" },
     summary: { type: "string" },
+    tasks: { type: "array", items: { type: "object", additionalProperties: false,
+      required: ["operation", "day", "category", "stage", "name", "plan", "status", "result"],
+      properties: {
+        operation: { type: "string", enum: ["create", "update"] }, day: { type: "string" },
+        category: { type: "string", enum: ["appointment", "planning", "review", "preparation", "service"] },
+        stage: { type: "string", enum: ["", "relationship", "needs", "presentation", "closing", "recruitment"] },
+        name: { type: "string" }, plan: { type: "string" }, result: { type: "string" },
+        status: { type: "string", enum: ["planned", "done", "blocked", "cancelled"] }
+      }
+    } },
   },
 } as const;
+
