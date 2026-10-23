@@ -11,6 +11,21 @@ create table public.daily_tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Keep the original plan immutable even for direct API clients.
+create function public.protect_daily_task_plan()
+returns trigger language plpgsql set search_path=public as $$
+begin
+  if new.owner_id is distinct from old.owner_id or new.day is distinct from old.day
+     or new.category is distinct from old.category or new.stage is distinct from old.stage
+     or (new.info - 'result') is distinct from (old.info - 'result') then
+    raise exception '原本計劃唔可以覆寫；請取消舊計劃再新增';
+  end if;
+  return new;
+end;
+$$;
+create trigger daily_tasks_protect before update on public.daily_tasks
+  for each row execute function public.protect_daily_task_plan();
+revoke all on function public.protect_daily_task_plan() from public,anon,authenticated;
 create index daily_tasks_owner_day on public.daily_tasks(owner_id,day);
 create trigger daily_tasks_touch before update on public.daily_tasks for each row execute function public.touch_updated();
 create trigger daily_tasks_audit after insert or update or delete on public.daily_tasks for each row execute function public.write_audit();
@@ -40,7 +55,11 @@ begin
   insert into public.wa_task_receipts values(p_draft,p_actor) on conflict do nothing;
   get diagnostics affected=row_count;
   if affected=0 then return; end if;
-  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) not between 1 and 30 then raise exception '待辦資料無效'; end if;
+  if p_items is null or jsonb_typeof(p_items) <> 'array' then raise exception '待辦資料無效'; end if;
+  if jsonb_array_length(p_items) not between 1 and 30 then raise exception '待辦資料無效'; end if;
+  if (select count(distinct value->>'id') from jsonb_array_elements(p_items)) <> jsonb_array_length(p_items) then
+    raise exception '同一待辦唔可以重複提交';
+  end if;
   for item in select value from jsonb_array_elements(p_items) loop
     if item->>'operation'='create' then
       insert into public.daily_tasks(id,owner_id,day,category,stage,status,info)
