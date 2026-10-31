@@ -9,7 +9,7 @@ export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
     { href: "/today", label: "每日待辦" },
     ...(isAdmin ? [{ href: "/review", label: "團隊 Review" }] : []),
     { href: "/board", label: "客戶進度" },
-    { href: "/whatsapp", label: "WhatsApp" },
+    { href: "/assistant", label: "Telegram 助理" },
   ];
   const links = [
     ...(isAdmin ? [{ href: "/admin", label: "主管總覽" }] : []),

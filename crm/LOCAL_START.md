@@ -1,3 +1,5 @@
+先試用請讀 [ASSISTANT_TRIAL.md](ASSISTANT_TRIAL.md)。
+
 # Ryan CRM 本機啟動與交接
 
 本機運行的是網站伺服器，資料仍在原有 Supabase；不是離線資料庫或客戶資料備份。
@@ -30,7 +32,7 @@ Ctrl+C 停止網站。電腦關機或休眠會停止本機服務，不能承諾 
 ## 已有與未完成
 
 已有：客戶管理、權限、業績、活動、每日計劃、主管週檢視、WhatsApp 整理與 signed bridge。
-需求見 docs/assistant-requirements.md。Telegram、Google OAuth、Gmail 助理、Google Calendar 同步、培訓紀錄及推送通知尚未實作完成，不能當成已接通。
+需求見 docs/assistant-requirements.md；目前新增實作、試用方式及限制以 ASSISTANT_TRIAL.md 為準。真實帳戶尚未完成端對端驗證。
 Codex 訂閱供本人使用開發 agent；不等於應用程式 API 額度或常駐 bot 服務。現有自動整理使用 Anthropic API，需另行配置及確認費用。
 
 ## 給下一位 Codex agent

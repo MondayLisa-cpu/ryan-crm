@@ -1,0 +1,4 @@
+const $=id=>document.getElementById(id);let pending=null;const notes=[];
+$('note').addEventListener('submit',e=>{e.preventDefault();pending={staff:$('staff').value,text:$('message').value};$('summary').textContent=pending.text;$('draft').hidden=false;$('status').textContent='尚未保存。請確認內容。';});
+$('cancel').addEventListener('click',()=>{pending=null;$('draft').hidden=true;$('status').textContent='已取消，沒有新增紀錄。';});
+$('confirm').addEventListener('click',()=>{if(!pending)return;notes.unshift(pending);pending=null;$('draft').hidden=true;$('feed').replaceChildren(...notes.map(n=>{const a=document.createElement('article');const h=document.createElement('h3');h.textContent=n.staff;const p=document.createElement('p');p.textContent=n.text;a.append(h,p);return a;}));$('status').textContent='已保存示範紀錄，Ryan 的全隊更新已顯示。';});
